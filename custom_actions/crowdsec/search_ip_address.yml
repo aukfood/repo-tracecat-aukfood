@@ -15,8 +15,7 @@ definition:
   expects:
     ip_address:
       type: str
-      description: The IP address to search
-      default: null
+      description: IPv4 or IPv6 address to analyze or scan.
   steps:
     - ref: search_ip_address
       action: core.http_request
