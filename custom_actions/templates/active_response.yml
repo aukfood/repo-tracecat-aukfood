@@ -6,7 +6,6 @@ type: action
   display_group: Wazuh
   doc_url: null
   author: null
-  deprecated: null
   secrets:
     - name: wazuh
       keys:
