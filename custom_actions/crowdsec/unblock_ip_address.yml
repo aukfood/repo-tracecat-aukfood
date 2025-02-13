@@ -16,9 +16,6 @@ definition:
     ip_address:
       type: str
       description: The IP address to allow.
-    url_server:
-      type: str
-      description: The IP address server
   steps:
     - ref: unblock_ip_address
       action: core.http_request
