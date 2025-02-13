@@ -1,0 +1,30 @@
+type: action
+definition:
+  name: unblock_ip_address
+  namespace: tools.crowdsec
+  title: Unblock an IP address
+  description: Sends a request to CrowdSec to unblock a specific IP address.
+  display_group: CrowdSec
+  doc_url: https://crowdsecurity.github.io/api_doc/lapi/#/watchers/DeleteDecision
+  author: bouddha-fr
+  secrets:
+    - name: crowdsec
+      keys:
+        - CROWDSEC_API_TOKEN
+        - CROWDSEC_API_URL
+  expects:
+    ip_address:
+      type: str
+      description: The IP address to allow.
+    url_server:
+      type: str
+      description: The IP address server
+  steps:
+    - ref: unblock_ip_address
+      action: core.http_request
+      args:
+        url: ${{ SECRETS.crowdsec.CROWDSEC_API_URL }}/v1/decisions?ip=${{ inputs.ip_address }}
+        method: DELETE
+        headers:
+          Authorization: Bearer ${{ SECRETS.crowdsec.CROWDSEC_API_TOKEN }}
+  returns: ${{ steps.unblock_ip_address.result }}
