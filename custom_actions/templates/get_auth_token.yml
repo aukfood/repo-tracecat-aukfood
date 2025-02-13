@@ -1,6 +1,6 @@
 type: action
 definition:
-  name: generate_wazuh_wui_token
+  name: generate_wazuh_token
   namespace: tools.wazuh
   title: Generate API Token
   description: Authenticate with the Wazuh API and retrieve a token.
