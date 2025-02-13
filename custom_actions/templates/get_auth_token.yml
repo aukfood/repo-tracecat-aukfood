@@ -33,7 +33,7 @@ definition:
         method: POST
         headers:
           Content-Type: application/json
-	payload:
+        payload:
           auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
         verify_ssl: ${{ inputs.verify_ssl  }}
   returns:
