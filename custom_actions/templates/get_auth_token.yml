@@ -37,4 +37,4 @@ definition:
           auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
         verify_ssl: ${{ inputs.verify_ssl  }}
   returns:
-    token: ${{ steps.get_auth_token.result.data.data.token }}
+    token: ${{ steps.get_auth_token.result.data.token }}
