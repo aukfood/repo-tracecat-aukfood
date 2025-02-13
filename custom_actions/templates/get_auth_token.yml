@@ -15,9 +15,11 @@ definition:
     verify_ssl:
       type: bool
       description: If False, disables SSL verification for internal networks.
+      default: true
     auth_token_exp_timeout:
       type: int
       description: Change the token base duration
+      default: 900
   steps:
     - ref: get_access_token
       action: core.http_request
