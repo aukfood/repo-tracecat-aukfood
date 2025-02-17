@@ -32,7 +32,7 @@ definition:
         url: ${{ inputs.url }}/agents/outdated
         method: GET
         headers:
-          Authorization: Bearer ${{ steps.get_access_token.result }}
+          Authorization: Bearer ${{ steps.get_access_token.result.data.data.token }}
         verify_ssl: ${{ inputs.verify_ssl  }}
     - ref: upgrade_agents
       action: core.http_request
