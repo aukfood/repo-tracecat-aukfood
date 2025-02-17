@@ -7,11 +7,6 @@ definition:
   display_group: Wazuh
   doc_url: null
   author: null
-  secrets:
-    - name: wazuh
-      keys:
-        - WAZUH_API_TOKEN
-        - WAZUH_API_URL
   expects:
     command:
       type: str
@@ -23,17 +18,30 @@ definition:
     agents_list:
       type: str | None
       description: List of agent IDs (separated by comma), all agents selected by default if not specified.
+    auth_token_exp_timeout:
+      type: int
+      description: Change the token base duration
+      default: 900
+    url:
+      type: str
+      description: URL for the Wazuh WUI API.
   steps:
+    - ref: get_access_token
+      action: tools.wazuh.get_access_token
+      args:
+        url: ${{ inputs.url }}
+        verify_ssl: ${{ inputs.verify_ssl  }}
+        auth_token_exp_timeout: 900
     - ref: run_active_response
       action: core.http_request
       args:
-        url: ${{ SECRETS.wazuh.WAZUH_API_URL }}/active-response
+        url: ${{ inputs.url }}/active-response
         method: PUT
         params:
           agents_list: ${{ inputs.agents_list }}
         headers:
           Content-Type: application/json
-          Authorization: Bearer ${{ SECRETS.wazuh.WAZUH_API_TOKEN }}
+          Authorization: Bearer ${{ steps.get_access_token.result }}
         payload:
           command: ${{ inputs.command }}
         verify_ssl: ${{ inputs.verify_ssl  }}
