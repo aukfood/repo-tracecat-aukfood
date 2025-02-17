@@ -24,6 +24,8 @@ definition:
       action: tools.wazuh.get_access_token
       args:
         url: ${{ inputs.url }}
+        verify_ssl: ${{ inputs.verify_ssl  }}
+        auth_token_exp_timeout: 900
     - ref: get_outdated_agents
       action: core.http_request
       args:
