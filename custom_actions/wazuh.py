@@ -9,7 +9,7 @@ from tracecat_registry import RegistrySecret, registry, secrets
 
 wazuh_secret = RegistrySecret(
     name="wazuh_wui",
-    keys=["WAZUH_WUI_USERNAME", "WAZUH_WUI_PASSWORD", "WAZUH_WUI_URL"],
+    keys=["WAZUH_WUI_USERNAME", "WAZUH_WUI_PASSWORD"],
 )
 """Wazuh API credentials.
 
