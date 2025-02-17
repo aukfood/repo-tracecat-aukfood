@@ -17,7 +17,6 @@ wazuh_secret = RegistrySecret(
 - keys:
     - `WAZUH_WUI_USERNAME`
     - `WAZUH_WUI_PASSWORD`
-    - `WAZUH_WUI_URL`
 """
 
 
