@@ -39,7 +39,7 @@ definition:
     - ref: upgrade_result
       action: core.http_request
       args:
-        url: ${{ SECRETS.wazuh.WAZUH_API_URL }}/agent/upgrade_result
+        url: ${{ SECRETS.wazuh.WAZUH_API_URL }}/agents/upgrade_result
         method: GET
         params:
           agents_list: ${{ FN.join(steps.upgrade_agents.result.data.data.affected_items[*].agent, ",") }}
