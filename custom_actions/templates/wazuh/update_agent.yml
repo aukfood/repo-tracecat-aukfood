@@ -21,6 +21,7 @@ definition:
       action: tools.wazuh.get_access_token
       args:
         url: ${{ SECRETS.wazuh.WAZUH_API_URL }}
+      verify_ssl: ${{ inputs.verify_ssl  }}
     - ref: get_outdated_agents
       action: core.http_request
       args:
