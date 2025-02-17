@@ -20,6 +20,9 @@ definition:
       type: int
       description: Change the token base duration
       default: 900
+    url:
+      type: str
+      description: URL for the Wazuh WUI API.
   steps:
     - ref: get_access_token
       action: tools.wazuh.get_access_token
