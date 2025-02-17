@@ -35,7 +35,7 @@ async def get_access_token(
 ) -> str:
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
-            f"{secrets.get('WAZUH_WUI_URL')}/security/user/authenticate",
+            f"{url}/security/user/authenticate",
             headers={"Content-Type": "application/json"},
             json={"auth_token_exp_timeout": auth_token_exp_timeout},
             auth=(secrets.get("WAZUH_WUI_USERNAME"), secrets.get("WAZUH_WUI_PASSWORD")),
