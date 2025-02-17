@@ -27,7 +27,7 @@ definition:
         url: ${{ SECRETS.wazuh.WAZUH_API_URL }}/agents/outdated
         method: GET
         headers:
-          Authorization: Bearer ${{ SECRETS.wazuh.WAZUH_API_TOKEN }}
+          Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl  }}
     - ref: upgrade_agents
       action: core.http_request
@@ -37,7 +37,7 @@ definition:
         params:
           agents_list: ${{ FN.join(steps.get_outdated_agents.result.data.data.affected_items[*].id, ",") }}
         headers:
-          Authorization: Bearer ${{ SECRETS.wazuh.WAZUH_API_TOKEN }}
+          Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl  }}
     - ref: upgrade_result
       action: core.http_request
@@ -47,6 +47,6 @@ definition:
         params:
           agents_list: ${{ FN.join(steps.upgrade_agents.result.data.data.affected_items[*].agent, ",") }}
         headers:
-          Authorization: Bearer ${{ SECRETS.wazuh.WAZUH_API_TOKEN }}
+          Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl  }}
   returns: ${{ steps.upgrade_result.result }}
