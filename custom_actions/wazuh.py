@@ -29,6 +29,7 @@ wazuh_secret = RegistrySecret(
     secrets=[wazuh_secret],
 )
 async def get_access_token(
+    url: Annotated[str, Field(..., description="Base URL for Wazuh WUI API.")],
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification for internal networks.")],
     auth_token_exp_timeout: Annotated[int, Field(900, description="Change the token base duration")],
 ) -> str:
