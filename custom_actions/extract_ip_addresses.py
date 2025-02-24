@@ -38,13 +38,7 @@ def extract_ipv4_addresses(texts):
 
 
 def extract_ipv6_addresses(
-    texts: Annotated[
-        str | list[str],
-        Field(..., description="Text or list of text to extract IP addresses from"),
-    ],
-) -> list[str]:
     """Extract unique IPv6 addresses from a list of strings."""
-
     if isinstance(texts, str):
         texts = [texts]
 
