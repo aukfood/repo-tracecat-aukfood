@@ -37,7 +37,7 @@ def extract_ipv4_addresses(texts):
     return list(valid_ips)
 
 
-def extract_ipv6_addresses(
+def extract_ipv6_addresses(texts):
     """Extract unique IPv6 addresses from a list of strings."""
     if isinstance(texts, str):
         texts = [texts]
