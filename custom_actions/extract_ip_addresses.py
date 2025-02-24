@@ -2,11 +2,19 @@ import ipaddress
 import itertools
 import re
 
-# Regex pour IPv4
 IPV4_REGEX = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
 
-# Regex optimisé pour IPv6
-IPV6_REGEX = r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?=:)(?:(?::(?:[0-9a-fA-F]{1,4})){1,7}|:)|(?:[0-9a-fA-F]{1,4}:){1,7}:|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(?:(?::[0-9a-fA-F]{1,4}){1,6}))\b"
+IPV6_REGEX = (
+    r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|"
+    r"(?=:)(?:(?::(?:[0-9a-fA-F]{1,4})){1,7}|:)|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,7}:|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|"
+    r"(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|"
+    r"[0-9a-fA-F]{1,4}:(?:(?::[0-9a-fA-F]{1,4}){1,6})\b"
+)
 
 def extract_ipv4_addresses(texts):
     """Extrait les adresses IPv4 uniques à partir d'une liste de textes."""
@@ -29,13 +37,19 @@ def extract_ipv4_addresses(texts):
     return list(valid_ips)
 
 
-def extract_ipv6_addresses(texts):
-    """Extrait les adresses IPv6 uniques à partir d'une liste de textes."""
+def extract_ipv6_addresses(
+    texts: Annotated[
+        str | list[str],
+        Field(..., description="Text or list of text to extract IP addresses from"),
+    ],
+) -> list[str]:
+    """Extract unique IPv6 addresses from a list of strings."""
+
     if isinstance(texts, str):
         texts = [texts]
 
     ip_addresses = itertools.chain.from_iterable(
-        re.findall(IPV6_REGEX, text) for text in texts
+        re.findall(IPV6_REGEX, text, re.IGNORECASE) for text in texts
     )
 
     valid_ips = set()
