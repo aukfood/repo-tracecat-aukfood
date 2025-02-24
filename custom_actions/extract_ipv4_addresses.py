@@ -1,7 +1,7 @@
 from typing import Annotated
 from pydantic import Field
 from tracecat_registry import registry
-from extract_ip_addresses import extract_ipv4_addresses  # Import de la fonction
+from .extract_ip_addresses import extract_ipv4_addresses  # Import de la fonction
 
 @registry.register(
     default_title="Extract IPv4 addresses",
