@@ -1,0 +1,38 @@
+type: action
+definition:
+  name: get_manager_info
+  namespace: tools.wazuh
+  title: Retrieve Wazuh Manager Information
+  description: Fetches information about the Wazuh manager, including version, name, and operating mode.
+  display_group: Wazuh
+  doc_url: https://documentation.wazuh.com/current/user-manual/api/reference.html#operation/api.controllers.manager_controller.get_info
+  author: null
+  expects:
+    base_url:
+      type: str
+      description: URL of the Wazuh API endpoint.
+    verify_ssl:
+      type: bool
+      description: If False, disables SSL verification for internal networks.
+      default: true
+    auth_token_exp_timeout:
+      type: int
+      description: Duration for the authentication token's validity.
+      default: 900
+  steps:
+    - ref: get_access_token
+      action: tools.wazuh.get_access_token
+      args:
+        url: ${{ inputs.base_url }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+        auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
+    - ref: fetch_manager_info
+      action: core.http_request
+      args:
+        url: ${{ inputs.base_url }}/manager/info
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+  returns: ${{ steps.fetch_manager_info.result }}
