@@ -1,9 +1,8 @@
-"""Generic MISP Event Creator from external alert."""
-
-from typing import Annotated
+from typing import Annotated, Optional
 import httpx
 from pydantic import Field
 from tracecat_registry import RegistrySecret, registry, secrets
+from datetime import datetime
 
 misp_secret = RegistrySecret(
     name="misp_api",
@@ -27,8 +26,12 @@ async def create_misp_event_from_ioc(
     distribution: Annotated[int, Field(0, description="0=Your org, 1=Community only, 2=Connected communities, 3=All")],
     to_ids: Annotated[bool, Field(True, description="Should this attribute be used for IDS signatures?")],
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
-    date: Annotated[str, Field(..., description="Event date in YYYY-MM-DD format.")],
+    date: Annotated[Optional[str], Field(None, description="Event date in YYYY-MM-DD format. If not provided, defaults to today.")]=None,
 ) -> dict:
+    # Si date non renseignée, on prend la date du jour UTC
+    if not date:
+        date = datetime.utcnow().strftime("%Y-%m-%d")
+
     headers = {
         "Authorization": secrets.get("MISP_API_KEY"),
         "Accept": "application/json",
