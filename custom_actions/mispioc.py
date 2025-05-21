@@ -51,10 +51,4 @@ async def search_ioc_in_misp(
             json=payload,
         )
         response.raise_for_status()
-        data = response.json()
-        attributes = data.get("response", {}).get("Attribute", [])
-        return {
-            "found": len(attributes) > 0,
-            "ioc": ioc_value,
-            "matches": attributes,
-        }
+        return response.json()
