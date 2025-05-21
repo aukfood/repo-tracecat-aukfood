@@ -1,10 +1,11 @@
-"""MISP IOC Submission Node."""
+"""MISP IOC Finder."""
 
 from typing import Annotated
+
+import httpx
 from pydantic import Field
-from tracecat_registry import registry, RegistrySecret
-from pymisp import ExpandedPyMISP, MISPEvent
-import iocextract
+
+from tracecat_registry import RegistrySecret, registry, secrets
 
 misp_secret = RegistrySecret(
     name="misp_api",
@@ -17,74 +18,43 @@ misp_secret = RegistrySecret(
     - `MISP_API_KEY`
 """
 
+
 @registry.register(
-    default_title="Push IOCs to MISP",
-    description="Extract IOCs from input text and create a MISP event.",
+    default_title="Search IOC in MISP",
+    description="Query MISP for a given IOC (IP, domain, hash, etc.) and check if it matches any known attributes.",
     display_group="MISP",
-    doc_url="https://www.misp-project.org/documentation/",
+    doc_url="https://www.circl.lu/doc/misp/automation/#searching-events",
     namespace="tools.misp",
     secrets=[misp_secret],
 )
-async def push_iocs_to_misp(
-    url: Annotated[str, Field(..., description="Base URL of your MISP instance (e.g. https://misp.local).")],
-    verify_ssl: Annotated[
-        bool,
-        Field(
-            True,
-            description="Disable SSL verification if using internal CA.",
-        ),
-    ],
-    event_info: Annotated[str, Field(..., description="Title/info of the MISP event.")],
-    distribution: Annotated[int, Field(0, description="Distribution level (0=org, 1=community, etc).")],
-    threat_level_id: Annotated[int, Field(2, description="Threat level ID (1=high, 2=medium, 3=low, 4=undefined).")],
-    analysis: Annotated[int, Field(1, description="Analysis level (0=initial, 1=ongoing, 2=completed).")],
-    log: Annotated[str, Field(..., description="Raw log or report text to extract IOCs from.")],
+async def search_ioc_in_misp(
+    misp_url: Annotated[str, Field(..., description="Base URL for the MISP instance (e.g., https://misp.local)")] ,
+    ioc_value: Annotated[str, Field(..., description="The IOC value to search for (e.g., IP, domain, hash).")],
+    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (useful for internal MISP).")],
 ) -> dict:
-    """Extracts IOCs from a log string and creates a new MISP event with them."""
+    """Search a single IOC in MISP and return matching attributes, if any."""
+    headers = {
+        "Authorization": secrets.get("MISP_API_KEY"),
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
 
-    # Get API key from secret
-    from tracecat_registry import secrets
-    api_key = secrets.get("MISP_API_KEY", secret_name="misp_api")
+    payload = {
+        "value": ioc_value,
+        "returnFormat": "json"
+    }
 
-    try:
-        # Initialize MISP
-        misp = ExpandedPyMISP(url, api_key, verify_ssl)
-
-        # Extract IOCs
-        iocs_found = {
-            'ip-dst': set(iocextract.extract_ips(log)),
-            'domain': set(iocextract.extract_domains(log)),
-            'url': set(iocextract.extract_urls(log)),
-            'md5': set(iocextract.extract_hashes(log, hash_type="md5")),
-            'sha1': set(iocextract.extract_hashes(log, hash_type="sha1")),
-            'sha256': set(iocextract.extract_hashes(log, hash_type="sha256")),
-        }
-
-        total_iocs = sum(len(v) for v in iocs_found.values())
-        if total_iocs == 0:
-            return {"status": "ok", "message": "No IOCs found in input.", "ioc_count": 0}
-
-        # Create MISP Event
-        event = MISPEvent()
-        event.info = event_info
-        event.distribution = distribution
-        event.analysis = analysis
-        event.threat_level_id = threat_level_id
-
-        for attr_type, values in iocs_found.items():
-            for value in values:
-                event.add_attribute(type=attr_type, value=value)
-
-        # Push to MISP
-        result = misp.add_event(event)
-        event_id = result.get("Event", {}).get("id", "N/A")
-
+    async with httpx.AsyncClient(verify=verify_ssl) as client:
+        response = await client.post(
+            f"{misp_url.rstrip('/')}/attributes/restSearch",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        data = response.json()
+        attributes = data.get("response", {}).get("Attribute", [])
         return {
-            "status": "ok",
-            "message": f"{total_iocs} IOCs sent to MISP.",
-            "ioc_count": total_iocs,
-            "misp_event_id": event_id
+            "found": len(attributes) > 0,
+            "ioc": ioc_value,
+            "matches": attributes,
         }
-
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
