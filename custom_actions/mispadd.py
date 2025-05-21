@@ -1,6 +1,4 @@
-"""Generic MISP Event Creator from external alert."""
-
-from typing import Annotated
+from typing import Annotated, List, Optional
 import httpx
 from pydantic import Field
 from tracecat_registry import RegistrySecret, registry, secrets
@@ -21,9 +19,8 @@ def get_category_for_ioc_type(ioc_type: str) -> str:
         "md5": "Payload delivery",
         "email-src": "Payload delivery",
         "filename": "Artifacts dropped",
-        # Ajoute ici d'autres mappings selon tes besoins
     }
-    return mapping.get(ioc_type.lower(), "Network activity")  # catégorie par défaut
+    return mapping.get(ioc_type.lower(), "Network activity")
 
 @registry.register(
     default_title="Create MISP Event from IOC",
@@ -41,6 +38,7 @@ async def create_misp_event_from_ioc(
     distribution: Annotated[int, Field(0, description="0=Your org, 1=Community only, 2=Connected communities, 3=All")],
     to_ids: Annotated[bool, Field(True, description="Should this attribute be used for IDS signatures?")],
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
+    tags: Annotated[Optional[List[str]], Field(None, description="Optional list of tags to add to the event")]=None,
 ) -> dict:
     headers = {
         "Authorization": secrets.get("MISP_API_KEY"),
@@ -53,10 +51,10 @@ async def create_misp_event_from_ioc(
     event_payload = {
         "Event": {
             "info": event_info,
-            "analysis": "2",  # Completed
+            "analysis": "2",
             "threat_level_id": str(threat_level_id),
             "distribution": str(distribution),
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),  # Date actuelle auto
+            "date": datetime.utcnow().strftime("%Y-%m-%d"),
             "Attribute": [
                 {
                     "type": ioc_type,
@@ -67,6 +65,10 @@ async def create_misp_event_from_ioc(
             ]
         }
     }
+
+    # Ajouter les tags si fournis
+    if tags:
+        event_payload["Event"]["Tag"] = [{"name": tag} for tag in tags]
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
