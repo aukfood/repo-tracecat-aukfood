@@ -28,13 +28,12 @@ async def enrich_misp_event(
     }
 
     payload = {
-        "event_id": str(event_id),
         "modules": modules
     }
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
-            f"{base_url.rstrip('/')}/events/enrichEvent",
+            f"{base_url.rstrip('/')}/events/enrichEvent/{event_id}",
             headers=headers,
             json=payload
         )
