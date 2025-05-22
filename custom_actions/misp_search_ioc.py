@@ -28,7 +28,7 @@ misp_secret = RegistrySecret(
     secrets=[misp_secret],
 )
 async def search_ioc_in_misp(
-    misp_url: Annotated[str, Field(..., description="Base URL for the MISP instance (e.g., https://misp.local)")] ,
+    base_url: Annotated[str, Field(..., description="Base URL for the MISP instance (e.g., https://misp.local)")] ,
     ioc_value: Annotated[str, Field(..., description="The IOC value to search for (e.g., IP, domain, hash).")],
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (useful for internal MISP).")],
 ) -> dict:
@@ -46,7 +46,7 @@ async def search_ioc_in_misp(
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
-            f"{misp_url.rstrip('/')}/attributes/restSearch",
+            f"{base_url.rstrip('/')}/attributes/restSearch",
             headers=headers,
             json=payload,
         )

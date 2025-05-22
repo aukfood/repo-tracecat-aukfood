@@ -30,7 +30,7 @@ def get_category_for_ioc_type(ioc_type: str) -> str:
     secrets=[misp_secret],
 )
 async def create_misp_event_from_ioc(
-    misp_url: Annotated[str, Field(..., description="Base URL of the MISP instance (e.g., https://misp.local)")],
+    base_url: Annotated[str, Field(..., description="Base URL of the MISP instance (e.g., https://misp.local)")],
     ioc_value: Annotated[str, Field(..., description="The IOC value to register in MISP (IP, domain, hash, etc.)")],
     ioc_type: Annotated[str, Field(..., description="MISP-compatible IOC type (e.g., ip-src, domain, sha256, etc.)")],
     event_info: Annotated[str, Field(..., description="Short description of the alert, e.g., 'Suspicious login from X'.")],
@@ -72,7 +72,7 @@ async def create_misp_event_from_ioc(
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
-            f"{misp_url.rstrip('/')}/events",
+            f"{base_url.rstrip('/')}/events",
             headers=headers,
             json=event_payload,
         )
