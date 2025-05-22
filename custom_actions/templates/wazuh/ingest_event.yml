@@ -37,7 +37,7 @@ definition:
         headers:
           Content-Type: application/json
           Authorization: Bearer ${{ steps.get_access_token.result }}
-        body:
+        payload:
           events:
             - ${{ inputs.log_event }}
         verify_ssl: ${{ inputs.verify_ssl }}
