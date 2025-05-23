@@ -38,3 +38,34 @@ async def enrich_misp_event(
         )
         response.raise_for_status()
         return response.json()
+
+@registry.register(
+    default_title="Enrich MISP Attribute",
+    description="Enrich a specific attribute in a MISP event using selected enrichment modules.",
+    display_group="MISP",
+    namespace="tools.misp",
+    secrets=[misp_secret],
+)
+async def enrich_misp_attribute(
+    base_url: Annotated[str, Field(..., description="Base URL of the MISP instance (e.g., https://misp.local)")],
+    attribute_id: Annotated[int, Field(..., description="ID of the attribute to enrich")],
+    modules: Annotated[List[str], Field(..., description="List of enrichment module names to apply (e.g. ['vt', 'passivetotal'])")],
+    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
+) -> dict:
+    headers = {
+        "Authorization": secrets.get("MISP_API_KEY"),
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    # Build payload to specify modules for enrichment
+    payload = {module: "true" for module in modules}
+
+    async with httpx.AsyncClient(verify=verify_ssl) as client:
+        response = await client.post(
+            f"{base_url.rstrip('/')}/attributes/enrich/{attribute_id}",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
