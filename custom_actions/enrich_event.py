@@ -18,7 +18,7 @@ misp_secret = RegistrySecret(
 async def enrich_misp_event(
     base_url: Annotated[str, Field(..., description="Base URL of the MISP instance (e.g., https://misp.local)")],
     event_id: Annotated[int, Field(..., description="ID of the MISP event to enrich")],
-    modules: Annotated[List[str], Field(..., description="List of enrichment module names to apply")],
+    modules: Annotated[List[str], Field(..., description="List of enrichment module names to apply (e.g. ['crowdsec', 'yara'])")],
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
 ) -> dict:
     headers = {
@@ -27,9 +27,8 @@ async def enrich_misp_event(
         "Content-Type": "application/json",
     }
 
-    payload = {
-        "modules": modules
-    }
+    # Dynamically build the payload
+    payload = {module: "true" for module in modules}
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
