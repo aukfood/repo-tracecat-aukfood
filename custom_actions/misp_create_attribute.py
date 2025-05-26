@@ -76,8 +76,8 @@ async def add_attribute_to_misp_event(
         }
     }
 
-    if comment:
-        attribute_payload["Attribute"]["comment"] = comment
+if comment and isinstance(comment, str) and comment.strip():
+    attribute_payload["Attribute"]["comment"] = comment.strip()
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
