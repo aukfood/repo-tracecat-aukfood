@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 import httpx
 from pydantic import Field
 from tracecat_registry import RegistrySecret, registry, secrets
@@ -8,7 +8,13 @@ misp_secret = RegistrySecret(
     keys=["MISP_API_KEY"],
 )
 
-# Mapping par défaut type → catégorie
+VALID_CATEGORIES = [
+    "Internal reference", "Targeting data", "Antivirus detection", "Payload delivery",
+    "Artifacts dropped", "Payload installation", "Persistence mechanism", "Network activity",
+    "Payload type", "Attribution", "External analysis", "Financial fraud", "Support Tool",
+    "Social network", "Person", "Other"
+]
+
 def get_category_for_ioc_type(ioc_type: str) -> str:
     mapping = {
         "ip-src": "Network activity",
@@ -27,14 +33,6 @@ def get_category_for_ioc_type(ioc_type: str) -> str:
     }
     return mapping.get(ioc_type.lower(), "Network activity")
 
-# Catégories valides MISP
-VALID_CATEGORIES = [
-    "Internal reference", "Targeting data", "Antivirus detection", "Payload delivery",
-    "Artifacts dropped", "Payload installation", "Persistence mechanism", "Network activity",
-    "Payload type", "Attribution", "External analysis", "Financial fraud", "Support Tool",
-    "Social network", "Person", "Other"
-]
-
 @registry.register(
     default_title="Add Attribute to MISP Event",
     description="Adds a custom attribute to an existing MISP event. Supports manual or inferred category.",
@@ -48,9 +46,12 @@ async def add_attribute_to_misp_event(
     ioc_value: Annotated[str, Field(..., description="The IOC value to add (e.g., IP, domain, hash, etc.)")],
     ioc_type: Annotated[str, Field(..., description="MISP-compatible IOC type (e.g., ip-src, domain, sha256, etc.)")],
     to_ids: Annotated[bool, Field(True, description="Should this attribute be used for IDS signatures?")],
-    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")] = True,
-    category: Annotated[Optional[str], Field(None, description="Optional category override. Must be one of the MISP categories.")] = None,
-    comment: Annotated[Optional[str], Field(None, description="Optional comment for the attribute")] = None,
+    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification.")] = True,
+    category: Annotated[Optional[str], Field(None, description="Optional category override")] = None,
+    comment: Annotated[Optional[str], Field(None, description="Optional comment")] = None,
+    event_info: Annotated[Optional[str], Field(None, description="Optional event info/title")] = None,
+    tags: Annotated[Optional[List[str]], Field(None, description="Optional tags to attach to the attribute")] = None,
+    threat_level_id: Annotated[Optional[int], Field(None, description="Optional threat level ID")] = None,
 ) -> dict:
     headers = {
         "Authorization": secrets.get("MISP_API_KEY"),
@@ -58,7 +59,6 @@ async def add_attribute_to_misp_event(
         "Content-Type": "application/json",
     }
 
-    # Catégorie : soit fournie, soit déduite
     selected_category = category or get_category_for_ioc_type(ioc_type)
 
     if category and category not in VALID_CATEGORIES:
@@ -73,7 +73,7 @@ async def add_attribute_to_misp_event(
         }
     }
 
-    if comment and isinstance(comment, str) and comment.strip():
+    if comment and comment.strip():
         attribute_payload["Attribute"]["comment"] = comment.strip()
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
@@ -83,4 +83,28 @@ async def add_attribute_to_misp_event(
             json=attribute_payload
         )
         response.raise_for_status()
-        return response.json()
+        result = response.json()
+
+        if tags:
+            for tag in tags:
+                tag_payload = {"Tag": {"name": tag}}
+                await client.post(
+                    f"{base_url.rstrip('/')}/events/addTag/{event_id}",
+                    headers=headers,
+                    json=tag_payload
+                )
+
+        if event_info or threat_level_id:
+            edit_event_payload = {"Event": {}}
+            if event_info:
+                edit_event_payload["Event"]["info"] = event_info
+            if threat_level_id is not None:
+                edit_event_payload["Event"]["threat_level_id"] = threat_level_id
+
+            await client.post(
+                f"{base_url.rstrip('/')}/events/edit/{event_id}",
+                headers=headers,
+                json=edit_event_payload
+            )
+
+        return result
