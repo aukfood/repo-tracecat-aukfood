@@ -1,23 +1,28 @@
-"""MISP IOC Finder."""
-
 from typing import Annotated
-
 import httpx
 from pydantic import Field
-
 from tracecat_registry import RegistrySecret, registry, secrets
 
-misp_secret = RegistrySecret(
-    name="misp_api",
-    keys=["MISP_API_KEY"],
-)
-"""MISP API credentials.
+misp_secret = RegistrySecret(name="misp_api", keys=["MISP_API_KEY"])
 
-- name: `misp_api`
-- keys:
-    - `MISP_API_KEY`
-"""
+async def _post_to_misp(
+    base_url: str,
+    path: str,
+    payload: dict,
+    verify_ssl: bool,
+) -> dict:
+    """Generic helper to send POST requests to a MISP endpoint."""
+    headers = {
+        "Authorization": secrets.get("MISP_API_KEY"),
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
 
+    url = f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+    async with httpx.AsyncClient(verify=verify_ssl) as client:
+        response = await client.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json()
 
 @registry.register(
     default_title="Search IOC in MISP",
@@ -28,27 +33,12 @@ misp_secret = RegistrySecret(
     secrets=[misp_secret],
 )
 async def search_ioc_in_misp(
-    base_url: Annotated[str, Field(..., description="Base URL for the MISP instance (e.g., https://misp.local)")] ,
+    base_url: Annotated[str, Field(..., description="Base URL for the MISP instance (e.g., https://misp.local)")],
     ioc_value: Annotated[str, Field(..., description="The IOC value to search for (e.g., IP, domain, hash).")],
-    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (useful for internal MISP).")],
+    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification.")],
 ) -> dict:
-    """Search a single IOC in MISP and return matching attributes, if any."""
-    headers = {
-        "Authorization": secrets.get("MISP_API_KEY"),
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-
     payload = {
         "value": ioc_value,
         "returnFormat": "json"
     }
-
-    async with httpx.AsyncClient(verify=verify_ssl) as client:
-        response = await client.post(
-            f"{base_url.rstrip('/')}/attributes/restSearch",
-            headers=headers,
-            json=payload,
-        )
-        response.raise_for_status()
-        return response.json()
+    return await _post_to_misp(base_url, "attributes/restSearch", payload, verify_ssl)
