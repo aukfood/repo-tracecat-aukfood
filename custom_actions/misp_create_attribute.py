@@ -52,7 +52,7 @@ async def add_attribute_to_misp_event(
         None,
         description="Optional category override. Must be one of the MISP categories."
     )] = None,
-    comment: Annotated[Optional[str], Field(None, description="Optional comment for the attribute")],
+    comment: Annotated[Optional[str], Field(None, description="Optional comment for the attribute")] = None,
     verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
 ) -> dict:
     headers = {
@@ -61,7 +61,7 @@ async def add_attribute_to_misp_event(
         "Content-Type": "application/json",
     }
 
-    # Catégorie : soit fournie manuellement, soit déduite
+    # Catégorie : soit fournie manuellement, soit déduite automatiquement
     selected_category = category or get_category_for_ioc_type(ioc_type)
 
     if category and category not in VALID_CATEGORIES:
@@ -76,8 +76,8 @@ async def add_attribute_to_misp_event(
         }
     }
 
-if comment and isinstance(comment, str) and comment.strip():
-    attribute_payload["Attribute"]["comment"] = comment.strip()
+    if comment and isinstance(comment, str) and comment.strip():
+        attribute_payload["Attribute"]["comment"] = comment.strip()
 
     async with httpx.AsyncClient(verify=verify_ssl) as client:
         response = await client.post(
