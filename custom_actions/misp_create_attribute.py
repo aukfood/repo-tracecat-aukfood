@@ -8,7 +8,7 @@ misp_secret = RegistrySecret(
     keys=["MISP_API_KEY"],
 )
 
-# Optionnel : déduire une catégorie par défaut si non spécifiée
+# Mapping par défaut type → catégorie
 def get_category_for_ioc_type(ioc_type: str) -> str:
     mapping = {
         "ip-src": "Network activity",
@@ -27,7 +27,7 @@ def get_category_for_ioc_type(ioc_type: str) -> str:
     }
     return mapping.get(ioc_type.lower(), "Network activity")
 
-# Liste des catégories valides selon la doc MISP
+# Catégories valides MISP
 VALID_CATEGORIES = [
     "Internal reference", "Targeting data", "Antivirus detection", "Payload delivery",
     "Artifacts dropped", "Payload installation", "Persistence mechanism", "Network activity",
@@ -48,12 +48,9 @@ async def add_attribute_to_misp_event(
     ioc_value: Annotated[str, Field(..., description="The IOC value to add (e.g., IP, domain, hash, etc.)")],
     ioc_type: Annotated[str, Field(..., description="MISP-compatible IOC type (e.g., ip-src, domain, sha256, etc.)")],
     to_ids: Annotated[bool, Field(True, description="Should this attribute be used for IDS signatures?")],
-    category: Annotated[Optional[str], Field(
-        None,
-        description="Optional category override. Must be one of the MISP categories."
-    )] = None,
+    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")] = True,
+    category: Annotated[Optional[str], Field(None, description="Optional category override. Must be one of the MISP categories.")] = None,
     comment: Annotated[Optional[str], Field(None, description="Optional comment for the attribute")] = None,
-    verify_ssl: Annotated[bool, Field(True, description="If False, disables SSL verification (for self-signed certs).")],
 ) -> dict:
     headers = {
         "Authorization": secrets.get("MISP_API_KEY"),
@@ -61,7 +58,7 @@ async def add_attribute_to_misp_event(
         "Content-Type": "application/json",
     }
 
-    # Catégorie : soit fournie manuellement, soit déduite automatiquement
+    # Catégorie : soit fournie, soit déduite
     selected_category = category or get_category_for_ioc_type(ioc_type)
 
     if category and category not in VALID_CATEGORIES:
