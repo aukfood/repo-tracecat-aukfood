@@ -39,7 +39,6 @@ definition:
         url: ${{ inputs.base_url }}
         verify_ssl: ${{ inputs.verify_ssl }}
         auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
-    
     - ref: list_agents
       action: core.http_request
       if: ${{ inputs.operation == "list" }}
@@ -49,7 +48,6 @@ definition:
         headers:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
-    
     - ref: get_agent
       action: core.http_request
       if: ${{ inputs.operation == "get" }}
@@ -59,7 +57,6 @@ definition:
         headers:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
-    
     - ref: add_agent
       action: core.http_request
       if: ${{ inputs.operation == "add" }}
@@ -73,7 +70,6 @@ definition:
           name: ${{ inputs.agent_name }}
           ip: ${{ inputs.agent_ip }}
         verify_ssl: ${{ inputs.verify_ssl }}
-    
     - ref: remove_agent
       action: core.http_request
       if: ${{ inputs.operation == "remove" }}
@@ -83,7 +79,6 @@ definition:
         headers:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
-    
     - ref: restart_agent
       action: core.http_request
       if: ${{ inputs.operation == "restart" }}
@@ -93,5 +88,4 @@ definition:
         headers:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
-  
   returns: ${{ FN.if(inputs.operation == "list", steps.list_agents.result, FN.if(inputs.operation == "get", steps.get_agent.result, FN.if(inputs.operation == "add", steps.add_agent.result, FN.if(inputs.operation == "remove", steps.remove_agent.result, FN.if(inputs.operation == "restart", steps.restart_agent.result, null))))) }}
