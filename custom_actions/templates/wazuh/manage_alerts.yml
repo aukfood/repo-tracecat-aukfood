@@ -39,14 +39,14 @@ definition:
       description: Duration for the authentication token's validity (in seconds).
       default: 900
   steps:
-    - ref: get_access_token
+    - name: get_access_token
       action: tools.wazuh.get_access_token
       args:
         url: ${{ inputs.base_url }}
         verify_ssl: ${{ inputs.verify_ssl }}
         auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
     
-    - ref: list_alerts
+    - name: list_alerts
       action: core.http_request
       if: ${{ inputs.operation == "list" }}
       args:
@@ -61,7 +61,7 @@ definition:
           rule_id: ${{ inputs.rule_id }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: get_alert
+    - name: get_alert
       action: core.http_request
       if: ${{ inputs.operation == "get" }}
       args:
@@ -71,7 +71,7 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: delete_alert
+    - name: delete_alert
       action: core.http_request
       if: ${{ inputs.operation == "delete" }}
       args:

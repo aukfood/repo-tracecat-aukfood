@@ -33,14 +33,14 @@ definition:
       description: Duration for the authentication token's validity (in seconds).
       default: 900
   steps:
-    - ref: get_access_token
+    - name: get_access_token
       action: tools.wazuh.get_access_token
       args:
         url: ${{ inputs.base_url }}
         verify_ssl: ${{ inputs.verify_ssl }}
         auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
     
-    - ref: list_agents
+    - name: list_agents
       action: core.http_request
       if: ${{ inputs.operation == "list" }}
       args:
@@ -50,7 +50,7 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: get_agent
+    - name: get_agent
       action: core.http_request
       if: ${{ inputs.operation == "get" }}
       args:
@@ -60,7 +60,7 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: add_agent
+    - name: add_agent
       action: core.http_request
       if: ${{ inputs.operation == "add" }}
       args:
@@ -74,7 +74,7 @@ definition:
           ip: ${{ inputs.agent_ip }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: remove_agent
+    - name: remove_agent
       action: core.http_request
       if: ${{ inputs.operation == "remove" }}
       args:
@@ -84,7 +84,7 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     
-    - ref: restart_agent
+    - name: restart_agent
       action: core.http_request
       if: ${{ inputs.operation == "restart" }}
       args:
