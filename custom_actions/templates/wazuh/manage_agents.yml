@@ -40,8 +40,8 @@ definition:
         verify_ssl: ${{ inputs.verify_ssl }}
         auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
     - ref: list_agents
-      action: core.http_request
       if: ${{ inputs.operation == "list" }}
+      action: core.http_request
       args:
         url: ${{ inputs.base_url }}/agents
         method: GET
@@ -49,8 +49,8 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     - ref: get_agent
-      action: core.http_request
       if: ${{ inputs.operation == "get" }}
+      action: core.http_request
       args:
         url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}
         method: GET
@@ -58,8 +58,8 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     - ref: add_agent
-      action: core.http_request
       if: ${{ inputs.operation == "add" }}
+      action: core.http_request
       args:
         url: ${{ inputs.base_url }}/agents
         method: POST
@@ -71,8 +71,8 @@ definition:
           ip: ${{ inputs.agent_ip }}
         verify_ssl: ${{ inputs.verify_ssl }}
     - ref: remove_agent
-      action: core.http_request
       if: ${{ inputs.operation == "remove" }}
+      action: core.http_request
       args:
         url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}
         method: DELETE
@@ -80,8 +80,8 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
     - ref: restart_agent
-      action: core.http_request
       if: ${{ inputs.operation == "restart" }}
+      action: core.http_request
       args:
         url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}/restart
         method: PUT
