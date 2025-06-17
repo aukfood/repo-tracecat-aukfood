@@ -81,9 +81,4 @@ definition:
           Authorization: Bearer ${{ steps.get_access_token.result }}
         verify_ssl: ${{ inputs.verify_ssl }}
   
-  returns: ${{ 
-    steps.list_alerts.result if inputs.operation == "list" else
-    steps.get_alert.result if inputs.operation == "get" else
-    steps.delete_alert.result if inputs.operation == "delete" else
-    null
-  }} 
+  returns: ${{ FN.if(inputs.operation == "list", steps.list_alerts.result, FN.if(inputs.operation == "get", steps.get_alert.result, FN.if(inputs.operation == "delete", steps.delete_alert.result, null))) }} 
