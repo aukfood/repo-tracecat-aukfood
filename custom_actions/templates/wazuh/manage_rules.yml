@@ -1,0 +1,108 @@
+type: action
+definition:
+  name: manage_rules
+  namespace: tools.wazuh
+  title: Manage Wazuh Rules
+  description: Perform various operations on Wazuh rules (list, get details, add, update, delete).
+  display_group: Wazuh
+  doc_url: https://documentation.wazuh.com/current/user-manual/api/reference.html#tag/Rules
+  author: bouddha-fr
+  expects:
+    base_url:
+      type: str
+      description: Base URL of the Wazuh API
+    operation:
+      type: str
+      description: Operation to perform (list, get, add, update, delete)
+      enum: [list, get, add, update, delete]
+    rule_id:
+      type: str
+      description: ID of the rule (required for get, update, delete operations)
+    rule_file:
+      type: str
+      description: Path to the rule file (required for add, update operations)
+    rule_content:
+      type: str
+      description: Content of the rule in XML format (required for add, update operations)
+    verify_ssl:
+      type: bool
+      description: Whether to verify SSL certificates.
+      default: true
+    auth_token_exp_timeout:
+      type: int
+      description: Duration for the authentication token's validity (in seconds).
+      default: 900
+  steps:
+    - ref: get_access_token
+      action: tools.wazuh.get_access_token
+      args:
+        url: ${{ inputs.base_url }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+        auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
+    
+    - ref: list_rules
+      action: core.http_request
+      if: ${{ inputs.operation == "list" }}
+      args:
+        url: ${{ inputs.base_url }}/rules
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: get_rule
+      action: core.http_request
+      if: ${{ inputs.operation == "get" }}
+      args:
+        url: ${{ inputs.base_url }}/rules/${{ inputs.rule_id }}
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: add_rule
+      action: core.http_request
+      if: ${{ inputs.operation == "add" }}
+      args:
+        url: ${{ inputs.base_url }}/rules
+        method: POST
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+          Content-Type: application/xml
+        payload: ${{ inputs.rule_content }}
+        params:
+          path: ${{ inputs.rule_file }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: update_rule
+      action: core.http_request
+      if: ${{ inputs.operation == "update" }}
+      args:
+        url: ${{ inputs.base_url }}/rules/${{ inputs.rule_id }}
+        method: PUT
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+          Content-Type: application/xml
+        payload: ${{ inputs.rule_content }}
+        params:
+          path: ${{ inputs.rule_file }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: delete_rule
+      action: core.http_request
+      if: ${{ inputs.operation == "delete" }}
+      args:
+        url: ${{ inputs.base_url }}/rules/${{ inputs.rule_id }}
+        method: DELETE
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+  
+  returns: ${{ 
+    steps.list_rules.result if inputs.operation == "list" else
+    steps.get_rule.result if inputs.operation == "get" else
+    steps.add_rule.result if inputs.operation == "add" else
+    steps.update_rule.result if inputs.operation == "update" else
+    steps.delete_rule.result if inputs.operation == "delete" else
+    null
+  }} 

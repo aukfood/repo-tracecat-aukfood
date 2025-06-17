@@ -1,0 +1,104 @@
+type: action
+definition:
+  name: manage_agents
+  namespace: tools.wazuh
+  title: Manage Wazuh Agents
+  description: Perform various operations on Wazuh agents (list, get details, add, remove, etc.).
+  display_group: Wazuh
+  doc_url: https://documentation.wazuh.com/current/user-manual/api/reference.html#tag/Agents
+  author: bouddha-fr
+  expects:
+    base_url:
+      type: str
+      description: Base URL of the Wazuh API
+    operation:
+      type: str
+      description: Operation to perform (list, get, add, remove, restart)
+      enum: [list, get, add, remove, restart]
+    agent_id:
+      type: str
+      description: ID of the agent (required for get, remove, restart operations)
+    agent_name:
+      type: str
+      description: Name of the agent (required for add operation)
+    agent_ip:
+      type: str
+      description: IP address of the agent (required for add operation)
+    verify_ssl:
+      type: bool
+      description: Whether to verify SSL certificates.
+      default: true
+    auth_token_exp_timeout:
+      type: int
+      description: Duration for the authentication token's validity (in seconds).
+      default: 900
+  steps:
+    - ref: get_access_token
+      action: tools.wazuh.get_access_token
+      args:
+        url: ${{ inputs.base_url }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+        auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
+    
+    - ref: list_agents
+      action: core.http_request
+      if: ${{ inputs.operation == "list" }}
+      args:
+        url: ${{ inputs.base_url }}/agents
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: get_agent
+      action: core.http_request
+      if: ${{ inputs.operation == "get" }}
+      args:
+        url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: add_agent
+      action: core.http_request
+      if: ${{ inputs.operation == "add" }}
+      args:
+        url: ${{ inputs.base_url }}/agents
+        method: POST
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+          Content-Type: application/json
+        payload:
+          name: ${{ inputs.agent_name }}
+          ip: ${{ inputs.agent_ip }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: remove_agent
+      action: core.http_request
+      if: ${{ inputs.operation == "remove" }}
+      args:
+        url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}
+        method: DELETE
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: restart_agent
+      action: core.http_request
+      if: ${{ inputs.operation == "restart" }}
+      args:
+        url: ${{ inputs.base_url }}/agents/${{ inputs.agent_id }}/restart
+        method: PUT
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+  
+  returns: ${{ 
+    steps.list_agents.result if inputs.operation == "list" else
+    steps.get_agent.result if inputs.operation == "get" else
+    steps.add_agent.result if inputs.operation == "add" else
+    steps.remove_agent.result if inputs.operation == "remove" else
+    steps.restart_agent.result if inputs.operation == "restart" else
+    null
+  }} 

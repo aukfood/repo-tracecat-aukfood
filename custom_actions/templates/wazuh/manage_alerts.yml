@@ -1,0 +1,89 @@
+type: action
+definition:
+  name: manage_alerts
+  namespace: tools.wazuh
+  title: Manage Wazuh Alerts
+  description: Perform various operations on Wazuh alerts (list, get details, delete).
+  display_group: Wazuh
+  doc_url: https://documentation.wazuh.com/current/user-manual/api/reference.html#tag/Alerts
+  author: bouddha-fr
+  expects:
+    base_url:
+      type: str
+      description: Base URL of the Wazuh API
+    operation:
+      type: str
+      description: Operation to perform (list, get, delete)
+      enum: [list, get, delete]
+    alert_id:
+      type: str
+      description: ID of the alert (required for get, delete operations)
+    start_date:
+      type: str
+      description: Start date for filtering alerts (format: YYYY-MM-DD HH:mm:ss)
+    end_date:
+      type: str
+      description: End date for filtering alerts (format: YYYY-MM-DD HH:mm:ss)
+    level:
+      type: int
+      description: Minimum alert level to retrieve
+    rule_id:
+      type: str
+      description: Filter alerts by rule ID
+    verify_ssl:
+      type: bool
+      description: Whether to verify SSL certificates.
+      default: true
+    auth_token_exp_timeout:
+      type: int
+      description: Duration for the authentication token's validity (in seconds).
+      default: 900
+  steps:
+    - ref: get_access_token
+      action: tools.wazuh.get_access_token
+      args:
+        url: ${{ inputs.base_url }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+        auth_token_exp_timeout: ${{ inputs.auth_token_exp_timeout }}
+    
+    - ref: list_alerts
+      action: core.http_request
+      if: ${{ inputs.operation == "list" }}
+      args:
+        url: ${{ inputs.base_url }}/alerts
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        params:
+          start_date: ${{ inputs.start_date }}
+          end_date: ${{ inputs.end_date }}
+          level: ${{ inputs.level }}
+          rule_id: ${{ inputs.rule_id }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: get_alert
+      action: core.http_request
+      if: ${{ inputs.operation == "get" }}
+      args:
+        url: ${{ inputs.base_url }}/alerts/${{ inputs.alert_id }}
+        method: GET
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+    
+    - ref: delete_alert
+      action: core.http_request
+      if: ${{ inputs.operation == "delete" }}
+      args:
+        url: ${{ inputs.base_url }}/alerts/${{ inputs.alert_id }}
+        method: DELETE
+        headers:
+          Authorization: Bearer ${{ steps.get_access_token.result }}
+        verify_ssl: ${{ inputs.verify_ssl }}
+  
+  returns: ${{ 
+    steps.list_alerts.result if inputs.operation == "list" else
+    steps.get_alert.result if inputs.operation == "get" else
+    steps.delete_alert.result if inputs.operation == "delete" else
+    null
+  }} 
