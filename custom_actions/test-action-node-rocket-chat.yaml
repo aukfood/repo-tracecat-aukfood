@@ -7,7 +7,7 @@ definition:
   namespace: tools.rocketchat
   name: send_message_to_rocket_chat
   expects:
-    webhhook_url:
+    webhook_url:
       type: str
       description: url of the Rocket.Chat webhook
       default: <default_value>
@@ -18,16 +18,16 @@ definition:
     channel:
       type: str
       description: channel to send the message to
-      default: '#general'  # Optional
+      default: '#general'
   steps:
     - ref: send_message
       action: core.http_request
       args:
         method: POST
-        url: ${{ webhhook_url }}
+        url: ${{ webhook_url }}
         headers:
           Content-Type: application/json
         payload:
-            text: ${{ message }}
-            channel: ${{ channel }}
+          text: ${{ message }}
+          channel: ${{ channel }}
   returns: ${{ steps.send_message.result }}
