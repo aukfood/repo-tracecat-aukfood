@@ -10,15 +10,10 @@ definition:
     webhook_url:
       type: str
       description: url of the Rocket.Chat webhook
-      default: <default_value>
     message:
       type: str
       description: message to send to the Rocket.Chat channel
       default: 'Hello, Rocket.Chat!'
-    channel:
-      type: str
-      description: channel to send the message to
-      default: '#general'
   steps:
     - ref: send_message
       action: core.http_request
@@ -29,5 +24,4 @@ definition:
           Content-Type: application/json
         payload:
           text: ${{ inputs.message }}
-          channel: ${{ inputs.channel }}
   returns: ${{ steps.send_message.result }}
