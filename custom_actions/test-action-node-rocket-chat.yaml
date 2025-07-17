@@ -1,0 +1,33 @@
+type: action
+definition:
+  title: Send Message to Rocket.Chat
+  description: send a message to a Rocket.Chat channel
+  display_group: RocketChat
+  doc_url: https://docs.rocket.chat/docs/integrations
+  namespace: tools.rocketchat
+  name: send_message_to_rocket_chat
+  expects:
+    webhhook_url:
+      type: str
+      description: url of the Rocket.Chat webhook
+      default: <default_value>
+    message:
+      type: str
+      description: message to send to the Rocket.Chat channel
+      default: 'Hello, Rocket.Chat!'
+    channel:
+      type: str
+      description: channel to send the message to
+      default: '#general'  # Optional
+  steps:
+    - ref: send_message
+      action: core.http.request
+      args:
+        method: POST
+        url: ${{ webhhook_url }}
+        headers:
+          Content-Type: application/json
+        payload:
+            text: ${{ message }}
+            channel: ${{ channel }}
+  returns: ${{ steps.send_message.response }}
