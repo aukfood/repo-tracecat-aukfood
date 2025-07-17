@@ -24,10 +24,10 @@ definition:
       action: core.http_request
       args:
         method: POST
-        url: ${{ webhook_url }}
+        url: ${{ inputs.webhook_url }}
         headers:
           Content-Type: application/json
         payload:
-          text: ${{ message }}
-          channel: ${{ channel }}
+          text: ${{ inputs.message }}
+          channel: ${{ inputs.channel }}
   returns: ${{ steps.send_message.result }}
