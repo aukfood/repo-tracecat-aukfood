@@ -30,4 +30,4 @@ definition:
         payload:
             text: ${{ message }}
             channel: ${{ channel }}
-  returns: ${{ steps.send_message.response }}
+  returns: ${{ steps.send_message.result }}
