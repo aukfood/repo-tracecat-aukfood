@@ -21,7 +21,7 @@ definition:
       default: '#general'  # Optional
   steps:
     - ref: send_message
-      action: core.http.request
+      action: core.http_request
       args:
         method: POST
         url: ${{ webhhook_url }}
