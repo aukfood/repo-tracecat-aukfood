@@ -1,11 +1,12 @@
 type: action
 definition:
   title: Send Message to Rocket.Chat
-  description: send a message to a Rocket.Chat channel
+  description: send a message to a Rocket.Chat channel via webhook
   display_group: RocketChat
   doc_url: https://docs.rocket.chat/docs/integrations
   namespace: tools.rocketchat
-  name: send_message_to_rocket_chat
+  author: EfusRyuga
+  name: send_message
   expects:
     webhook_url:
       type: str
@@ -13,7 +14,7 @@ definition:
     message:
       type: str
       description: message to send to the Rocket.Chat channel
-      default: 'Hello, Rocket.Chat!'
+      default: 'Hello from Tracecat!'
   steps:
     - ref: send_message
       action: core.http_request
